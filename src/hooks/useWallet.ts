@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BrowserProvider, formatEther } from 'ethers';
-import { SOMNIA_CHAIN_CONFIG } from '../contracts/AgentProcure';
+import { SOMNIA_CHAIN_CONFIG } from '../contracts/agentProcure';
 
 export function useWallet() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);

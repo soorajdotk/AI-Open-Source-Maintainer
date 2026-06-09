@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import type { ProcurementRequest } from '../types/procurement';
+import { calculateDashboardMetrics } from '../services/dashboardService';
 
 interface DashboardProps {
   requests: ProcurementRequest[];
@@ -13,24 +14,8 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ requests }) => {
   const navigate = useNavigate();
 
-  // Calculate stats dynamically
-  const totalRequests = requests.length;
-  const pendingReviews = requests.filter(r => r.status === 'pending' || r.status === 'processing').length;
-  const completedReviews = requests.filter(r => r.status === 'completed').length;
-  
-  // Calculate average savings (budget - winner price)
-  let totalSavings = 0;
-  let savingsCount = 0;
-  requests.forEach(r => {
-    if (r.status === 'completed' && r.vendors && r.winnerId) {
-      const winner = r.vendors.find(v => v.id === r.winnerId);
-      if (winner && winner.price < r.budget) {
-        totalSavings += (r.budget - winner.price);
-        savingsCount++;
-      }
-    }
-  });
-  const averageSavings = savingsCount > 0 ? totalSavings / savingsCount : 0;
+  // Calculate metrics using dashboardService
+  const metrics = calculateDashboardMetrics(requests);
 
   const getStatusBadge = (status: ProcurementRequest['status']) => {
     switch (status) {
@@ -70,25 +55,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ requests }) => {
         {[
           {
             title: 'Total Requests',
-            val: totalRequests,
+            val: metrics.totalRequests,
             icon: <Cpu className="h-5 w-5 text-violet-400" />,
             bg: 'from-violet-500/10 to-transparent border-violet-500/10',
           },
           {
-            title: 'Pending Reviews',
-            val: pendingReviews,
-            icon: <Clock className="h-5 w-5 text-amber-400 animate-pulse" />,
-            bg: 'from-amber-500/10 to-transparent border-amber-500/10',
-          },
-          {
-            title: 'Completed Reviews',
-            val: completedReviews,
+            title: 'Completed Analyses',
+            val: metrics.completedAnalyses,
             icon: <CheckCircle className="h-5 w-5 text-emerald-400" />,
             bg: 'from-emerald-500/10 to-transparent border-emerald-500/10',
           },
           {
-            title: 'Average Savings',
-            val: averageSavings > 0 ? `$${averageSavings.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '$0',
+            title: 'Pending Analyses',
+            val: metrics.pendingAnalyses,
+            icon: <Clock className="h-5 w-5 text-amber-400 animate-pulse" />,
+            bg: 'from-amber-500/10 to-transparent border-amber-500/10',
+          },
+          {
+            title: 'Successful Recs',
+            val: metrics.successfulRecommendations,
             icon: <PiggyBank className="h-5 w-5 text-cyan-400" />,
             bg: 'from-cyan-500/10 to-transparent border-cyan-500/10',
           },
@@ -111,7 +96,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ requests }) => {
       <div className="space-y-4">
         <h2 className="text-lg font-bold text-slate-200">Active Evaluations</h2>
         
-        {totalRequests === 0 ? (
+        {metrics.totalRequests === 0 ? (
           <div className="text-center py-16 bg-slate-900/20 rounded-2xl border border-slate-900 border-dashed max-w-xl mx-auto flex flex-col items-center gap-4">
             <div className="h-12 w-12 bg-slate-950 rounded-2xl flex items-center justify-center text-slate-600 border border-slate-800 shadow-inner">
               <Bot className="h-6 w-6" />
@@ -142,7 +127,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ requests }) => {
                       <h3 className="text-base font-extrabold text-slate-200 group-hover:text-cyan-400 transition-colors duration-300 line-clamp-1">
                         {req.productName}
                       </h3>
-                      <span className="text-[10px] text-slate-500 font-mono mt-0.5 block">ID: {req.id.substring(0, 10)}...</span>
+                      <span className="text-[10px] text-slate-500 font-mono mt-0.5 block">ID: {String(req.id).substring(0, 10)}...</span>
                     </div>
                   </CardHeader>
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { Award, FileText, CheckCircle, ExternalLink, Calendar, Key, ShieldCheck, HeartHandshake } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { SOMNIA_CHAIN_CONFIG } from '../contracts/AgentProcure';
+import { SOMNIA_CHAIN_CONFIG } from '../contracts/agentProcure';
 
 interface RecommendationCardProps {
   winnerName: string;

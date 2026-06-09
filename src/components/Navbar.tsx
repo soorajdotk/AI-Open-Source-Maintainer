@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Cpu, LayoutDashboard, PlusCircle, Home } from 'lucide-react';
+import { Cpu, LayoutDashboard, PlusCircle, Home, History } from 'lucide-react';
 import { WalletConnect } from './WalletConnect';
 
 interface NavbarProps {
@@ -78,6 +78,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             <PlusCircle className="h-4 w-4" />
             <span>Create Request</span>
             {isActive('/create') && (
+              <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
+            )}
+          </Link>
+          <Link to="/history" className={linkClass('/history')}>
+            <History className="h-4 w-4" />
+            <span>History</span>
+            {isActive('/history') && (
               <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
             )}
           </Link>

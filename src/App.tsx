@@ -7,6 +7,7 @@ import { Dashboard } from './pages/Dashboard';
 import { RequestDetails } from './pages/RequestDetails';
 import { AgentActivity } from './pages/AgentActivity';
 import { Recommendation } from './pages/Recommendation';
+import { History } from './pages/History';
 import { useWallet } from './hooks/useWallet';
 import type { ProcurementRequest, VendorData, AgentState } from './types/procurement';
 import { Info } from 'lucide-react';
@@ -157,6 +158,13 @@ export default function App() {
     syncRequests(updated);
   };
 
+  const updateRequestRequestId = (id: string, requestId: string) => {
+    const updated = requests.map(req => 
+      req.id === id ? { ...req, id: requestId } : req
+    );
+    syncRequests(updated);
+  };
+
   const saveRequestResult = (
     id: string, 
     vendors: VendorData[], 
@@ -216,8 +224,6 @@ export default function App() {
               element={
                 <CreateRequest 
                   addRequest={addRequest} 
-                  walletAddress={walletAddress}
-                  isSimulated={isSimulated}
                 />
               } 
             />
@@ -233,6 +239,7 @@ export default function App() {
                 <RequestDetails 
                   requests={requests} 
                   updateRequestStatus={updateRequestStatus} 
+                  updateRequestRequestId={updateRequestRequestId}
                 />
               } 
             />
@@ -243,8 +250,6 @@ export default function App() {
                 <AgentActivity 
                   requests={requests} 
                   saveRequestResult={saveRequestResult} 
-                  walletAddress={walletAddress}
-                  isSimulated={isSimulated}
                 />
               } 
             />
@@ -252,6 +257,11 @@ export default function App() {
             <Route 
               path="/request/:id/result" 
               element={<Recommendation requests={requests} />} 
+            />
+
+            <Route 
+              path="/history" 
+              element={<History requests={requests} />} 
             />
           </Routes>
         </main>

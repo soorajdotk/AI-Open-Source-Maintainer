@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { RecommendationCard } from '../components/RecommendationCard';
 import { VendorCard } from '../components/VendorCard';
 import { AgentCard } from '../components/AgentCard';
+import { AgentStatusCard } from '../components/AgentStatusCard';
 import type { ProcurementRequest } from '../types/procurement';
 
 interface RecommendationProps {
@@ -71,14 +72,24 @@ export const Recommendation: React.FC<RecommendationProps> = ({ requests }) => {
         </div>
       </div>
 
-      {/* Main recommendation result card (The WOW card) */}
-      <RecommendationCard
-        winnerName={winner.name}
-        overallScore={winner.scores.overall}
-        reasoning={winner.reasoning}
-        txHash={request.txHash}
-        timestamp={request.timestamp}
-      />
+      {/* Main recommendation result and agent status cards (Side by Side in Grid) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <RecommendationCard
+            winnerName={winner.name}
+            overallScore={winner.scores.overall}
+            reasoning={winner.reasoning}
+            txHash={request.txHash}
+            timestamp={request.timestamp}
+          />
+        </div>
+        <div className="lg:col-span-1">
+          <AgentStatusCard 
+            requestId={localStorage.getItem("requestId") || request.id} 
+            status={false} // false = Completed
+          />
+        </div>
+      </div>
 
       {/* Tabbed view toggler */}
       <div className="space-y-6">

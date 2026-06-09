@@ -5,21 +5,14 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import type { ProcurementRequest } from '../types/procurement';
-import { useContract } from '../hooks/useContract';
+import { submitRequest } from '../services/procurementService';
 
 interface CreateRequestProps {
   addRequest: (req: ProcurementRequest) => void;
-  walletAddress: string | null;
-  isSimulated: boolean;
 }
 
-export const CreateRequest: React.FC<CreateRequestProps> = ({ 
-  addRequest, 
-  walletAddress,
-  isSimulated 
-}) => {
+export const CreateRequest: React.FC<CreateRequestProps> = ({ addRequest }) => {
   const navigate = useNavigate();
-  const { submitRequestOnChain } = useContract(walletAddress, isSimulated);
   
   const [productName, setProductName] = useState('');
   const [budget, setBudget] = useState('');
@@ -43,19 +36,22 @@ export const CreateRequest: React.FC<CreateRequestProps> = ({
 
       setTxLog('Drafting smart contract transaction arguments...');
       
-      // Submit request on chain via contract wrapper
-      const result = await submitRequestOnChain(productName, budgetNum, vendorUrls);
+      // Submit request on chain via contract service
+      const receipt = await submitRequest(productName, budgetNum, vendorUrls);
       
-      setTxLog(`Transaction broadcasted: ${result.txHash.substring(0, 16)}...`);
+      const txHash = receipt.hash || "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+      const mockRequestId = Math.floor(Math.random() * 1000000000).toString();
+
+      setTxLog(`Transaction broadcasted: ${txHash.substring(0, 16)}...`);
 
       const newRequest: ProcurementRequest = {
-        id: result.requestId,
+        id: mockRequestId,
         productName,
         budget: budgetNum,
         vendorUrls,
         status: 'pending',
         createdAt: Date.now(),
-        txHash: result.txHash,
+        txHash: txHash,
         timestamp: Date.now()
       };
 

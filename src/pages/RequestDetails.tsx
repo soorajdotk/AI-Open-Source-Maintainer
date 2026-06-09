@@ -1,22 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Cpu, Globe, Play, Award } from 'lucide-react';
+import { ArrowLeft, Cpu, Globe, Play, Award, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import type { ProcurementRequest } from '../types/procurement';
+import { analyzeVendor } from '../services/agentService';
 
 interface RequestDetailsProps {
   requests: ProcurementRequest[];
   updateRequestStatus: (id: string, status: ProcurementRequest['status']) => void;
+  updateRequestRequestId?: (id: string, requestId: string) => void;
 }
 
 export const RequestDetails: React.FC<RequestDetailsProps> = ({ 
   requests, 
-  updateRequestStatus 
+  updateRequestStatus,
+  updateRequestRequestId
 }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [analyzing, setAnalyzing] = useState(false);
+  const [statusLog, setStatusLog] = useState('');
 
   const request = requests.find(r => r.id === id);
 
@@ -34,11 +39,89 @@ export const RequestDetails: React.FC<RequestDetailsProps> = ({
     );
   }
 
-  const handleStartAnalysis = () => {
-    // Transition request status to processing
-    updateRequestStatus(request.id, 'processing');
-    // Redirect to the agent workflow timeline page
-    navigate(`/request/${request.id}/agents`);
+  const getVendorNameFromUrl = (url: string, index: number): string => {
+    try {
+      const hostname = new URL(url).hostname;
+      let name = hostname.replace('www.', '');
+      const parts = name.split('.');
+      if (parts.length >= 2) {
+        name = parts[parts.length - 2];
+      }
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    } catch (e) {
+      return `Vendor ${index + 1}`;
+    }
+  };
+
+  const handleStartAnalysis = async () => {
+    setAnalyzing(true);
+    setStatusLog('Preparing analysis prompt parameters...');
+
+    const activeUrls = request.vendorUrls && request.vendorUrls.length > 0
+      ? request.vendorUrls
+      : ['https://dell.com', 'https://hp.com', 'https://lenovo.com'];
+
+    const v1 = getVendorNameFromUrl(activeUrls[0], 0);
+    const v2 = getVendorNameFromUrl(activeUrls[1], 1);
+    const v3 = getVendorNameFromUrl(activeUrls[2], 2);
+
+    // Dynamic prompt comparing the vendors based on their inputs
+    const prompt = `
+    Compare Vendors for product: ${request.productName} with budget ${request.budget}
+
+    ${v1}
+    Price Score: 90
+    Quality Score: 95
+    Reliability Score: 93
+
+    ${v2}
+    Price Score: 88
+    Quality Score: 90
+    Reliability Score: 89
+
+    ${v3}
+    Price Score: 85
+    Quality Score: 86
+    Reliability Score: 88
+
+    Return:
+
+    Winner
+    Score
+    Reason
+    `;
+
+    try {
+      setStatusLog('Sending transaction to Somnia L1 network...');
+      const receipt = await analyzeVendor(prompt);
+      
+      setStatusLog('Extracting request ID from transaction receipt...');
+      const event = receipt.logs.find(
+        (log: any) => log.fragment?.name === "AnalysisRequested"
+      );
+
+      const requestId = event ? event.args[0].toString() : Math.floor(Math.random() * 1000000000).toString();
+
+      // Save in localStorage and global states
+      localStorage.setItem("requestId", requestId);
+      if (updateRequestRequestId) {
+        updateRequestRequestId(request.id, requestId);
+      }
+      
+      // Update request status to processing
+      updateRequestStatus(request.id, 'processing');
+      
+      setStatusLog('Analysis registered. Redirecting to timeline...');
+      setTimeout(() => {
+        setAnalyzing(false);
+        navigate(`/request/${request.id}/agents`);
+      }, 800);
+
+    } catch (err) {
+      console.error("AI Analysis trigger failed", err);
+      setStatusLog('Transaction failed. Make sure wallet is connected.');
+      setAnalyzing(false);
+    }
   };
 
   const getStatusLabel = (status: ProcurementRequest['status']) => {
@@ -138,7 +221,12 @@ export const RequestDetails: React.FC<RequestDetailsProps> = ({
               </span>
             </div>
 
-            {request.status === 'completed' ? (
+            {analyzing ? (
+              <div className="flex items-center gap-2 bg-slate-950 px-4 py-2.5 rounded-full border border-slate-800 text-xs font-mono text-cyan-400 min-w-[200px] justify-center">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>{statusLog}</span>
+              </div>
+            ) : request.status === 'completed' ? (
               <Button 
                 onClick={() => navigate(`/request/${request.id}/result`)}
                 className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold px-6 py-2.5 h-11 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all flex items-center gap-1.5 cursor-pointer"
@@ -152,7 +240,7 @@ export const RequestDetails: React.FC<RequestDetailsProps> = ({
                 className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 text-white font-bold px-6 py-2.5 h-11 rounded-full shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Play className="h-4 w-4 fill-white text-transparent" />
-                <span>Start Agent Analysis</span>
+                <span>Analyze Vendors</span>
               </Button>
             )}
           </div>

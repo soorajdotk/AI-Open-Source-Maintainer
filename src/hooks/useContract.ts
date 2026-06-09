@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { BrowserProvider, Contract } from 'ethers';
 import { AGENT_PROCURE_ABI } from '../contracts/abi';
-import { AGENT_PROCURE_CONTRACT_ADDRESS } from '../contracts/AgentProcure';
+import { AGENT_PROCURE_CONTRACT_ADDRESS } from '../contracts/agentProcure';
 
 export function useContract(walletAddress: string | null, isSimulated: boolean) {
   
