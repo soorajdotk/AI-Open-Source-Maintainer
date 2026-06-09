@@ -27,8 +27,8 @@ export const Home: React.FC = () => {
         </h1>
 
         <p className="text-base sm:text-lg text-slate-400 max-w-3xl mx-auto leading-relaxed mb-10">
-          AgentProcure AI is an AI-powered autonomous procurement and vendor evaluation platform built on Somnia. 
-          Define your budgets, submit raw vendor URLs, and let our distributed multi-agent systems crawl, 
+          AgentProcure AI is an AI-powered autonomous procurement and vendor evaluation platform built on Somnia.
+          Define your budgets, submit raw vendor URLs, and let our distributed multi-agent systems crawl,
           verify, rank, and settle procurement transactions on-chain.
         </p>
 
@@ -130,7 +130,7 @@ export const Home: React.FC = () => {
               </span>
             </h2>
             <p className="text-sm text-slate-400 leading-relaxed">
-              Somnia’s ultra-fast block times and high throughput allow multi-agent systems to synchronize execution states, 
+              Somnia’s ultra-fast block times and high throughput allow multi-agent systems to synchronize execution states,
               store parameters on-chain, and trigger automated payouts without expensive RPC lag or high gas spikes.
             </p>
             <div className="pt-2">

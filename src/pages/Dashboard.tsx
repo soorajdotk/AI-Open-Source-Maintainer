@@ -1,20 +1,49 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, LayoutList, CheckCircle, Clock, PiggyBank, ArrowRight, Bot, Cpu } from 'lucide-react';
+import { Plus, LayoutList, CheckCircle, Clock, Cpu, Loader2, Wallet, ArrowRight, Bot, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import type { ProcurementRequest } from '../types/procurement';
 import { calculateDashboardMetrics } from '../services/dashboardService';
+import { getAllRequests } from '../services/procurementService';
+import { useWallet } from '../hooks/useWallet';
 
 interface DashboardProps {
-  requests: ProcurementRequest[];
+  requests?: ProcurementRequest[];
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ requests }) => {
+export const Dashboard: React.FC<DashboardProps> = () => {
   const navigate = useNavigate();
+  const [requests, setRequests] = useState<ProcurementRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [contractError, setContractError] = useState<string | null>(null);
+  const { walletAddress } = useWallet();
 
-  // Calculate metrics using dashboardService
+  const loadRequests = async () => {
+    try {
+      setContractError(null);
+      const data = await getAllRequests();
+      setRequests(data);
+    } catch (err: any) {
+      console.error("Failed to load requests for dashboard:", err);
+      const errStr = String(err.message || err);
+      if (errStr.includes("BAD_DATA") || errStr.includes("0x") || errStr.includes("decode")) {
+        setContractError("Contract not found at the configured address. Please verify that MetaMask is connected to Somnia Shannon Testnet (Chain ID 50312) and the contract address is correct in .env.");
+      } else {
+        setContractError("Failed to query Somnia blockchain data. Please verify your MetaMask network connection.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRequests();
+    const interval = setInterval(loadRequests, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   const metrics = calculateDashboardMetrics(requests);
 
   const getStatusBadge = (status: ProcurementRequest['status']) => {
@@ -22,14 +51,38 @@ export const Dashboard: React.FC<DashboardProps> = ({ requests }) => {
       case 'pending':
         return <Badge className="bg-amber-950/40 text-amber-400 border border-amber-800/30 font-mono text-[10px]">Awaiting Agent Analysis</Badge>;
       case 'processing':
-        return <Badge className="bg-cyan-950/50 text-cyan-400 border border-cyan-800/40 font-mono text-[10px] animate-pulse">Agents Crawling...</Badge>;
+        return <Badge className="bg-cyan-950/50 text-cyan-400 border border-cyan-800/40 font-mono text-[10px] animate-pulse">AI Analysis Running...</Badge>;
       case 'completed':
         return <Badge className="bg-emerald-950/50 text-emerald-400 border border-emerald-800/30 font-mono text-[10px]">On-Chain Resolved</Badge>;
     }
   };
 
+  const formatAddress = (addr: string | null) => {
+    if (!addr) return "Not Connected";
+    return `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-16 text-center space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto text-cyan-500" />
+        <p className="text-xs text-slate-500 font-mono">Loading dynamic procurement metrics...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-10 space-y-8">
+      {contractError && (
+        <div className="bg-rose-950/45 border border-rose-850/50 rounded-2xl p-4 text-rose-300 text-xs flex items-start gap-3 shadow-md max-w-5xl">
+          <AlertCircle className="h-5 w-5 text-rose-400 flex-shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <span className="font-bold block uppercase text-[10px] tracking-wider text-rose-400 font-mono">Contract Connection Warning</span>
+            <p className="leading-relaxed">{contractError}</p>
+          </div>
+        </div>
+      )}
+
       {/* Header section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -72,19 +125,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ requests }) => {
             bg: 'from-amber-500/10 to-transparent border-amber-500/10',
           },
           {
-            title: 'Successful Recs',
-            val: metrics.successfulRecommendations,
-            icon: <PiggyBank className="h-5 w-5 text-cyan-400" />,
+            title: 'Wallet Address',
+            val: formatAddress(walletAddress),
+            icon: <Wallet className="h-5 w-5 text-cyan-400" />,
             bg: 'from-cyan-500/10 to-transparent border-cyan-500/10',
+            isAddress: true
           },
         ].map((stat, i) => (
           <Card key={i} className={`bg-gradient-to-br ${stat.bg} border bg-slate-900/40 backdrop-blur-sm shadow-sm`}>
             <CardContent className="p-5 flex items-center justify-between">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 overflow-hidden">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">{stat.title}</span>
-                <div className="text-2xl font-black text-slate-100">{stat.val}</div>
+                <div className={`font-black text-slate-100 ${stat.isAddress ? 'text-lg font-mono truncate max-w-[150px]' : 'text-2xl'}`}>{stat.val}</div>
               </div>
-              <div className="h-10 w-10 bg-slate-950 rounded-xl flex items-center justify-center border border-slate-800">
+              <div className="h-10 w-10 bg-slate-950 rounded-xl flex items-center justify-center border border-slate-800 flex-shrink-0">
                 {stat.icon}
               </div>
             </CardContent>
@@ -127,7 +181,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ requests }) => {
                       <h3 className="text-base font-extrabold text-slate-200 group-hover:text-cyan-400 transition-colors duration-300 line-clamp-1">
                         {req.productName}
                       </h3>
-                      <span className="text-[10px] text-slate-500 font-mono mt-0.5 block">ID: {String(req.id).substring(0, 10)}...</span>
+                      <span className="text-[10px] text-slate-500 font-mono mt-0.5 block">Request ID: {req.id}</span>
                     </div>
                   </CardHeader>
 
@@ -147,9 +201,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ requests }) => {
                     {/* Status Badge & Timestamp */}
                     <div className="flex justify-between items-center">
                       {getStatusBadge(req.status)}
-                      <span className="text-[10px] text-slate-500 font-mono">
-                        {new Date(req.createdAt).toLocaleDateString()}
-                      </span>
                     </div>
                   </CardContent>
                 </div>

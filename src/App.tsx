@@ -152,37 +152,37 @@ export default function App() {
   };
 
   const updateRequestStatus = (id: string, status: ProcurementRequest['status']) => {
-    const updated = requests.map(req => 
+    const updated = requests.map(req =>
       req.id === id ? { ...req, status } : req
     );
     syncRequests(updated);
   };
 
   const updateRequestRequestId = (id: string, requestId: string) => {
-    const updated = requests.map(req => 
+    const updated = requests.map(req =>
       req.id === id ? { ...req, id: requestId } : req
     );
     syncRequests(updated);
   };
 
   const saveRequestResult = (
-    id: string, 
-    vendors: VendorData[], 
-    winnerId: string, 
-    agents: AgentState[], 
+    id: string,
+    vendors: VendorData[],
+    winnerId: string,
+    agents: AgentState[],
     txHash: string
   ) => {
-    const updated = requests.map(req => 
-      req.id === id 
-        ? { 
-            ...req, 
-            status: 'completed' as const, 
-            vendors, 
-            winnerId, 
-            agents, 
-            txHash,
-            timestamp: Date.now()
-          } 
+    const updated = requests.map(req =>
+      req.id === id
+        ? {
+          ...req,
+          status: 'completed' as const,
+          vendors,
+          winnerId,
+          agents,
+          txHash,
+          timestamp: Date.now()
+        }
         : req
     );
     syncRequests(updated);
@@ -208,7 +208,7 @@ export default function App() {
           <div className="bg-amber-950/60 border-y border-amber-800/40 px-4 py-2 text-center text-xs text-amber-300 flex items-center justify-center gap-2 backdrop-blur-sm z-40">
             <Info className="h-4 w-4 animate-bounce text-amber-400" />
             <span>
-              MetaMask was not detected or connected. The app is running in <strong>Web3 Sandbox Simulation mode</strong>. 
+              MetaMask was not detected or connected. The app is running in <strong>Web3 Sandbox Simulation mode</strong>.
               All contract queries and transactions are mock-compiled inside the browser.
             </span>
           </div>
@@ -218,50 +218,50 @@ export default function App() {
         <main className="flex-1 bg-slate-950">
           <Routes>
             <Route path="/" element={<Home />} />
-            
-            <Route 
-              path="/create" 
+
+            <Route
+              path="/create"
               element={
-                <CreateRequest 
-                  addRequest={addRequest} 
+                <CreateRequest
+                  addRequest={addRequest}
                 />
-              } 
-            />
-            
-            <Route 
-              path="/dashboard" 
-              element={<Dashboard requests={requests} />} 
-            />
-            
-            <Route 
-              path="/request/:id" 
-              element={
-                <RequestDetails 
-                  requests={requests} 
-                  updateRequestStatus={updateRequestStatus} 
-                  updateRequestRequestId={updateRequestRequestId}
-                />
-              } 
-            />
-            
-            <Route 
-              path="/request/:id/agents" 
-              element={
-                <AgentActivity 
-                  requests={requests} 
-                  saveRequestResult={saveRequestResult} 
-                />
-              } 
-            />
-            
-            <Route 
-              path="/request/:id/result" 
-              element={<Recommendation requests={requests} />} 
+              }
             />
 
-            <Route 
-              path="/history" 
-              element={<History requests={requests} />} 
+            <Route
+              path="/dashboard"
+              element={<Dashboard requests={requests} />}
+            />
+
+            <Route
+              path="/request/:id"
+              element={
+                <RequestDetails
+                  requests={requests}
+                  updateRequestStatus={updateRequestStatus}
+                  updateRequestRequestId={updateRequestRequestId}
+                />
+              }
+            />
+
+            <Route
+              path="/request/:id/agents"
+              element={
+                <AgentActivity
+                  requests={requests}
+                  saveRequestResult={saveRequestResult}
+                />
+              }
+            />
+
+            <Route
+              path="/request/:id/result"
+              element={<Recommendation requests={requests} />}
+            />
+
+            <Route
+              path="/history"
+              element={<History requests={requests} />}
             />
           </Routes>
         </main>
